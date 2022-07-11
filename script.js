@@ -1,7 +1,7 @@
 const calculator = document.querySelector(".calculator");
 const output = document.querySelector(".display__output");
 
-//* Sorting the operatos in order of PEMDAS
+//* Sorting the operator in order of PEMDAS
 const operatorValues = {
   X: 4,
   "/": 3,
@@ -20,36 +20,53 @@ function operatorSort(a, b) {
 
 function calculate() {
   //* 1) Creating an array that is split AT any operator
-  const rawExpression = output.innerText.split(/([-+\/X])/);
+  let expression = output.innerText
+    .split(/([-+\/X])/)
+    .filter((item) => item !== "");
 
   //* 2) Checking if only ONE number was entered
-  if (rawExpression.length === 1) {
-    return (output.innerText = rawExpression[0].replace(/(?!\d).(?=\.)/g, ""));
+  if (expression.length === 1) {
+    return (output.innerText = expression[0].replace(/(?!\d).(?=\.)/g, ""));
   }
   //* 3) Formatting the numbers in the raw expression
-  const expression = rawExpression.map((number, index, array) => {
+  for (let i = 0; i < expression.length; i++) {
+    const number = expression[i];
     if (
       number.match(/(?!\d).(?=\.)/g) &&
       number.match(/(?!\d).(?=\.)/g).length >= 1
     ) {
       const formattedNumber = number.replace(/(?!\d).(?=\.)/g, "");
-      return formattedNumber;
+      expression[i] = formattedNumber;
     }
     if (/\d/.test(number)) {
-      if (index > 0 && array[index - 1] === "-" && array[index - 2] === "") {
+      if (
+        i > 0 &&
+        expression[i - 1] === "-" &&
+        /([-+\/X])/.test(expression[i - 2])
+      ) {
         const negativeNumber = 0 - +number;
-        console.log(rawExpression.splice(index - 2, 3, negativeNumber));
-        console.log(rawExpression);
-        return;
+        expression[i] = negativeNumber;
+        expression.splice(i - 1, 1);
+        break;
       }
-      return +number;
+      expression[i] = +number;
     }
-    return number;
-  });
-  console.log(expression);
+  }
+  //* Eliminate consecutive operators
+  let j = 1;
+  for (let cur = 0; cur < expression.length; cur++) {
+    let number = expression[cur];
+    console.log(number);
+    if (!/\d/.test(number) && !/\d/.test(expression[j])) {
+      expression[cur] = "";
+    }
+    j++;
+  }
+
+  expression = expression.filter((value) => value !== "");
 
   //* 4) creating an array of all the operators and sorting them
-  const operators = output.innerText.match(/[-+\/X]/g);
+  const operators = expression.filter((item) => /[-+\/X]/.test(item));
   operators.sort((a, b) => operatorSort(a, b));
 
   //* 5) Looping through all the operators
