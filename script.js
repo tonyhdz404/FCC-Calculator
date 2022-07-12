@@ -38,11 +38,13 @@ function calculate() {
       const formattedNumber = number.replace(/(?!\d).(?=\.)/g, "");
       expression[i] = formattedNumber;
     }
+
     if (/\d/.test(number)) {
       if (
-        i > 0 &&
-        expression[i - 1] === "-" &&
-        /([-+\/X])/.test(expression[i - 2])
+        (i > 0 &&
+          expression[i - 1] === "-" &&
+          /([-+\/X])/.test(expression[i - 2])) ||
+        i - 1 === 0
       ) {
         const negativeNumber = 0 - +number;
         expression[i] = negativeNumber;
@@ -64,9 +66,12 @@ function calculate() {
   }
 
   expression = expression.filter((value) => value !== "");
+  console.log(expression);
 
   //* 4) creating an array of all the operators and sorting them
-  const operators = expression.filter((item) => /[-+\/X]/.test(item));
+  const operators = expression.filter((item) => {
+    return /[-+\/X]/.test(item) && typeof item === "string";
+  });
   operators.sort((a, b) => operatorSort(a, b));
 
   //* 5) Looping through all the operators
@@ -97,6 +102,7 @@ function calculate() {
         break;
     }
     expression.splice(operatorIndex - 1, 3, result);
+    // console.log(expression);
   }
 
   output.innerText = result;
@@ -105,17 +111,47 @@ function calculate() {
 calculator.addEventListener("click", function (e) {
   const button = e.target;
   if (!button.classList.contains("btn")) return;
+  //* Clear button clicked
   if (button.id === "clear") {
     return (output.innerText = 0);
   }
+  //* Equal button clicked
   if (button.id === "equals") {
     return calculate();
   }
+  //TODO Negative or Positive button clicked
+  if (button.id === "negpos") {
+    if (output.innerText === "0" && !button.classList.contains("operator")) {
+      console.log("only number");
+      return (output.innerText = "-");
+    }
+    let tempExpression = output.innerText
+      .split(/([+\/X])/)
+      .filter((item) => item !== "");
+
+    console.log(tempExpression);
+    if (tempExpression.length === 1) {
+      let number = +tempExpression[0];
+      if (number > 0) {
+        number = 0 - number;
+        tempExpression[0] = number;
+        return (output.innerText = tempExpression);
+      }
+      if (number < 0) {
+        number = number * -1;
+        tempExpression[0] = number;
+        return (output.innerText = tempExpression);
+      }
+
+      console.log("A number presentr", number);
+    }
+    return (output.innerText += "-");
+  }
+  //* Zero or other number button clicked
   const buttonValue = button.innerText;
   if (output.innerText === "0" && !button.classList.contains("operator")) {
     return (output.innerText = buttonValue);
   }
-
   //* Decimal Validation
   if (button.id === "decimal") {
     if (!/([-+\/X])/.test(output.innerText) && /\./.test(output.innerText))
@@ -124,6 +160,8 @@ calculator.addEventListener("click", function (e) {
       const lastNumber = output.innerText.split(/([-+\/X])/).at(-1);
       if (/\./.test(lastNumber)) return;
     }
+  }
+  if (button.classList.contains("number")) {
   }
   output.innerText += buttonValue;
 });
